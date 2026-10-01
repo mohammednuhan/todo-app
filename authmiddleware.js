@@ -1,28 +1,29 @@
-const jwt= require ('jsonwebtoken')
+const jwt = require('jsonwebtoken');
 
-function authmiddleware (req,res,next){
+const JWT_SECRET = "secreatkey";
 
+function authmiddleware(req, res, next) {
+    const token = req.headers.token;
 
-const token = req.headers.token 
-if (!token){
-    return res.status(403).json({
-        message: "No token provided"
-    });
-}
+    if (!token) {
+        return res.status(403).json({
+            message: "No token provided"
+        });
+    }
 
-const decoded = jwt.verify (token, "secretkey")
-const username = decoded.username
+    try {
+        const decoded = jwt.verify(token, JWT_SECRET);
 
-  if (!username){
-    return res.status(403).json({
-        message : "token is mismatched"
-    })
+        req.userId = decoded.id;
+        req.username = decoded.username;
 
-    req.username = username 
-        
-   
-    next ();
-  }
+        next();
+
+    } catch (err) {
+        return res.status(403).json({
+            message: "Invalid token"
+        });
+    }
 }
 
 module.exports = authmiddleware;

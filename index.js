@@ -1,79 +1,107 @@
-// const express = require ("express")
-const jwt = require ("jsonwebtoken")
-const { authMiddleware } = require("./middleware.js")
+import express from "express";
+import jwt from "jsonwebtoken";
+import cors from "cors";
+import authMiddleware from "./authmiddleware.js";
+import { Pool } from "pg";
 
-const { Pool } = require ("pg");
+const app = express();
 
-const pool = new Pool ({
-    connectionString : "postgresql://neondb_owner:npg_r4lHfFq8husR@ep-twilight-wave-aqtcfqum-pooler.c-8.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require"
-})
+app.use(express.json());
+app.use(cors());
 
-const app = express()
-
-app.use(express.json())
+const pool = new Pool({
+  connectionString: "postgresql://neondb_owner:npg_ea9rwgxOvsX2@ep-small-hill-aqb1tnkj-pooler.c-8.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require"
+});
 
 app.post("/signup", async (req, res) => {
-    const username = req.body.username;
-    const password = req.body.password;
+  const username = req.body.username;
+  const password = req.body.password;
 
-    const result = await pool.query("SELECT * FROM users WHERE username = $1,$2" [username,password])
+  const result = await pool.query(
+    "SELECT * FROM users WHERE username = $1",
+    [username]
+  );
 
-    if(result.rows.length > 0) {
-        return res.status(403).json({
-            message: "User already exist"
-        })
-    }
+  if (result.rows.length > 0) {
+    return res.status(403).json({
+      message: "User already exist"
+    });
+  }
 
-    await pool.query("INSERT INTO users (username, password) VALUES ($1, $2) RETURNING id", [username, password]);
+  await pool.query(
+    "INSERT INTO users (username, password) VALUES ($1, $2) RETURNING id",
+    [username, password]
+  );
 
-
-    res.json({
-        message: "User created!"
-    })
-})
+  res.json({
+    message: "User created!"
+  });
+});
 
 app.post("/signin", async (req, res) => {
-    const username = req.body.username;
-    const password = req.body.password;
+  const username = req.body.username;
+  const password = req.body.password;
 
-    const result = await pool.query("SELECT * FROM users WHERE username = $1 AND password = $2", [username, password])
+  const result = await pool.query(
+    "SELECT * FROM users WHERE username = $1 AND password = $2",
+    [username, password]
+  );
 
-    if(result.rows.length = 0) {
-        res.status(403).json({
-            message: "Incorrect username or password"
-        })
-        return
-    }
+  if (result.rows.length === 0) {
+    return res.status(403).json({
+      message: "Incorrect username or password"
+    });
+  }
 
-    const token = jwt.sign({
-        username
-    }, "secreat")
+  const user = result.rows[0];
 
-    res.json({
-        token
-    })
-})
+  const token = jwt.sign(
+    {
+      id: user.id,
+      username: user.username
+    },
+    "secreatkey"
+  );
 
-app.post("/todo", authMiddleware,async (req, res) => {
-    const username = req.username;
+  res.json({
+    token
+  });
+});
+
+app.post("/todos", authMiddleware, async (req, res) => {
+  try {
     const todo = req.body.todo;
-
-    await pool.query ("INSERT INTO todo (username,todo) VALUES ($1,$2)",[username,todo])
-
-   
-    res.json({
-        message: "todo added!"
-    })
-})
-
-app.get("/todo", authMiddleware, async (req, res) => {
     const username = req.username;
-    
-    const result = await pool.query("SELECT * FROM todo WHERE username = $1", [username])
 
-    res.json({
-        todo: result.rows
-    })
-})
+    await pool.query(
+      "INSERT INTO todo (username, todo) VALUES ($1, $2)",
+      [username, todo]
+    );
 
-app.listen(3000);
+    res.json({ message: "Todo added" });
+
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: "Todo not added" });
+  }
+});
+
+app.get("/todos", authMiddleware, async (req, res) => {
+  try {
+    const username = req.username;
+
+    const result = await pool.query(
+      "SELECT * FROM todo WHERE username = $1",
+      [username]
+    );
+
+    res.json({ todos: result.rows });
+
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: "Error loading todos" });
+  }
+});
+app.listen(3000, () => {
+  console.log("Server running on port 3000");
+});
