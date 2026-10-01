@@ -1,0 +1,64 @@
+<div class="auth-page">
+  <section class="card">
+    <header class="card__header">
+      <h1 class="card__title">Create your account</h1>
+      <p class="card__subtitle">Start organising your todos in seconds.</p>
+    </header>
+
+    @if (error(); as message) {
+      <p class="alert" role="alert">{{ message }}</p>
+    }
+
+    <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+      <div class="field">
+        <label class="field__label" for="username">Username</label>
+        <input
+          id="username"
+          class="field__input"
+          type="text"
+          formControlName="username"
+          autocomplete="username"
+          placeholder="yourname"
+        />
+        @if (form.controls.username.touched && form.controls.username.invalid) {
+          <p class="field__error">
+            @if (form.controls.username.hasError('required')) {
+              Username is required.
+            } @else {
+              Username must be at least 3 characters.
+            }
+          </p>
+        }
+      </div>
+
+      <div class="field">
+        <label class="field__label" for="password">Password</label>
+        <input
+          id="password"
+          class="field__input"
+          type="password"
+          formControlName="password"
+          autocomplete="new-password"
+          placeholder="••••••••"
+        />
+        @if (form.controls.password.touched && form.controls.password.invalid) {
+          <p class="field__error">
+            @if (form.controls.password.hasError('required')) {
+              Password is required.
+            } @else {
+              Password must be at least 6 characters.
+            }
+          </p>
+        }
+      </div>
+
+      <button class="btn btn--primary" type="submit" [disabled]="loading()">
+        {{ loading() ? 'Creating account…' : 'Sign up' }}
+      </button>
+    </form>
+
+    <footer class="card__footer">
+      Already have an account? <a routerLink="/signin">Sign in</a>
+    </footer>
+  </section>
+</div>

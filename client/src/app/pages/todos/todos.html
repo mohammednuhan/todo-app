@@ -1,0 +1,22 @@
+<div class="todos-page">
+  <header class="topbar">
+    <span class="topbar__brand">tode</span>
+
+    <div class="topbar__user">
+      <span class="topbar__username">{{ auth.username() }}</span>
+      <button class="btn btn--ghost" type="button" (click)="logout()">Log out</button>
+    </div>
+  </header>
+
+  <main class="todos-main">
+    <h1 class="todos-main__title">Your todos</h1>
+
+    <section class="empty">
+      <p class="empty__title">You're signed in</p>
+      <p class="empty__hint">
+        Auth is wired up. The todo list itself is the next step — the backend already exposes
+        <code>POST /todos</code> and <code>GET /todos</code>.
+      </p>
+    </section>
+  </main>
+</div>
